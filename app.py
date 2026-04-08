@@ -8,15 +8,20 @@ from flask import (Flask, abort, flash, jsonify, redirect, render_template,
 from flask_sqlalchemy import SQLAlchemy
 from PIL import Image
 
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///whose_eyes.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(BASE_DIR, "whose_eyes.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["UPLOAD_FOLDER"] = os.path.join(os.path.dirname(__file__), "uploads")
+app.config["UPLOAD_FOLDER"] = os.path.join(BASE_DIR, "uploads")
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB
 
 db = SQLAlchemy(app)
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
+with app.app_context():
+    db.create_all()
 
 
 # ─── Models ───────────────────────────────────────────────────────────────────
@@ -72,6 +77,16 @@ def get_current_player(room):
     if not sid:
         return None
     return Player.query.filter_by(room_id=room.id, session_id=sid).first()
+
+
+@app.context_processor
+def inject_current_user_name():
+    sid = session.get("session_id")
+    if sid:
+        player = Player.query.filter_by(session_id=sid).order_by(Player.id.desc()).first()
+        if player:
+            return {"current_user_name": player.name}
+    return {"current_user_name": None}
 
 
 def calc_points(time_taken):
@@ -336,6 +351,4 @@ def room_status(code):
 
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
     app.run(debug=True, port=5000)

@@ -52,6 +52,13 @@ ul, ol { padding-left: 1.4rem; }
 .logo:hover { color: var(--accent2); text-decoration: none; }
 .logo-eye { font-size: 1.5rem; }
 
+.header-welcome {
+  margin-left: auto;
+  font-size: .9rem;
+  color: var(--muted);
+}
+.header-welcome strong { color: var(--accent2); }
+
 /* ── Main layout ───────────────────────────────────────────────────────────── */
 .site-main {
   max-width: 900px;

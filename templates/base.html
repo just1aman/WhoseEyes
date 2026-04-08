@@ -12,6 +12,9 @@
     <a href="{{ url_for('index') }}" class="logo">
       <span class="logo-eye">&#9862;</span> Whose Eyes?
     </a>
+    {% if current_user_name %}
+    <span class="header-welcome">Welcome, <strong>{{ current_user_name }}</strong></span>
+    {% endif %}
   </header>
 
   <main class="site-main">
