@@ -8,7 +8,9 @@
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>Room <span class="code-badge">{{ room.code }}</span></h1>
+    <h1>Room <span class="code-badge" id="roomCode">{{ room.code }}</span>
+      <button class="btn-copy" id="copyBtn" onclick="copyCode()" title="Copy room code">Copy</button>
+    </h1>
     <p class="muted">Share this code with your friends so they can join.</p>
   </div>
   {% if player.is_host %}
@@ -65,4 +67,16 @@
   <p>Waiting for the host to start the game&hellip; (page auto-refreshes)</p>
 </div>
 {% endif %}
+
+<script>
+function copyCode() {
+  var code = document.getElementById('roomCode').textContent.trim();
+  navigator.clipboard.writeText(code).then(function () {
+    var btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
 {% endblock %}

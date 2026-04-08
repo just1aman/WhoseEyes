@@ -197,6 +197,25 @@ input[type="file"] { cursor: pointer; }
   border-radius: 6px;
 }
 
+.btn-copy {
+  display: inline-block;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  background: var(--surface);
+  color: var(--accent2);
+  border: 1px solid var(--accent2);
+  border-radius: 6px;
+  padding: .25rem .65rem;
+  margin-left: .6rem;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: background .15s, color .15s;
+}
+.btn-copy:hover { background: var(--accent2); color: var(--bg); }
+.btn-copy.copied { background: var(--success); border-color: var(--success); color: #fff; }
+
 .host-badge {
   background: var(--accent);
   color: #fff;
