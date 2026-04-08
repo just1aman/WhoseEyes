@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Whose Eyes? — Party Game{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <h1 class="hero-title">Whose Eyes?</h1>
+  <p class="hero-sub">Upload a close-up of your eyes. Can your friends tell whose they are?</p>
+</div>
+
+<div class="card-row">
+  <!-- Create a room -->
+  <div class="card">
+    <h2>Host a Game</h2>
+    <p class="muted">Create a new room and invite friends with your code.</p>
+    <form action="{{ url_for('create_room') }}" method="post">
+      <label for="create-name">Your name</label>
+      <input id="create-name" name="name" type="text" placeholder="e.g. Alex" maxlength="40" required autocomplete="off">
+      <button type="submit" class="btn btn-primary">Create Room</button>
+    </form>
+  </div>
+
+  <!-- Join a room -->
+  <div class="card">
+    <h2>Join a Game</h2>
+    <p class="muted">Got a code from a friend? Jump in.</p>
+    <form action="{{ url_for('join_room') }}" method="post">
+      <label for="join-name">Your name</label>
+      <input id="join-name" name="name" type="text" placeholder="e.g. Jordan" maxlength="40" required autocomplete="off">
+      <label for="join-code">Room code</label>
+      <input id="join-code" name="code" type="text" placeholder="ABCDEF"
+             maxlength="6" pattern="[A-Za-z]{6}" required autocomplete="off"
+             style="text-transform:uppercase;letter-spacing:.15em;">
+      <button type="submit" class="btn btn-secondary">Join Room</button>
+    </form>
+  </div>
+</div>
+
+<section class="how-to">
+  <h2>How it works</h2>
+  <ol class="steps">
+    <li><strong>Join</strong> — Everyone enters the room with the same 6-letter code.</li>
+    <li><strong>Upload</strong> — Crop and upload a close-up photo of just your eyes.</li>
+    <li><strong>Guess</strong> — The host starts the round. Match each pair of eyes to the right person. Faster correct guesses earn more points.</li>
+    <li><strong>Score</strong> — The leaderboard updates after everyone has guessed.</li>
+  </ol>
+</section>
+{% endblock %}

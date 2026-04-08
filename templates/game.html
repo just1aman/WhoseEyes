@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Guess! — Room {{ room.code }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Whose Eyes Are These?</h1>
+    <p class="muted">Match each photo to the right person. Faster = more points.</p>
+  </div>
+  <div class="timer-box" id="timerBox">
+    <span class="timer-label">Time</span>
+    <span class="timer-value" id="timerValue">0:00</span>
+    <span class="timer-note">(fast = bonus pts)</span>
+  </div>
+</div>
+
+{% if already_guessed %}
+<!-- Already submitted -->
+<div class="card waiting-card">
+  <div class="pulse-dot"></div>
+  <h2>Guesses submitted!</h2>
+  <p>Waiting for the other players to finish&hellip;</p>
+  <p class="muted">The results page will load automatically.</p>
+  <a href="{{ url_for('results', code=room.code) }}" class="btn btn-ghost" style="margin-top:1rem;">View results so far</a>
+</div>
+
+{% elif photo_players | length == 0 %}
+<div class="card">
+  <p>You are the only player with a photo — nothing to guess! Wait for results.</p>
+  <a href="{{ url_for('results', code=room.code) }}" class="btn btn-secondary" style="margin-top:1rem;">See results</a>
+</div>
+
+{% else %}
+<!-- Guess form -->
+<form action="{{ url_for('submit_guess', code=room.code) }}" method="post" id="guessForm">
+  <div class="eyes-grid">
+    {% for pp in photo_players %}
+    <div class="eye-card" id="eyeCard{{ pp.id }}">
+      <div class="eye-photo-wrap">
+        <img src="{{ url_for('player_image', player_id=pp.id) }}" alt="Mystery eyes" class="eye-photo">
+        <div class="eye-number">#{{ loop.index }}</div>
+      </div>
+      <div class="eye-select-wrap">
+        <label for="guess_{{ pp.id }}">Who is this?</label>
+        <select name="guess_{{ pp.id }}" id="guess_{{ pp.id }}" class="guess-select" required
+                onchange="markSelected(this, {{ pp.id }})">
+          <option value="" disabled selected>— pick a name —</option>
+          {% for opt in name_options %}
+          <option value="{{ opt.id }}">{{ opt.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="submit-row">
+    <span id="guessCount" class="muted">0 / {{ photo_players | length }} guessed</span>
+    <button type="submit" class="btn btn-primary btn-large" id="submitBtn" disabled>
+      Submit all guesses
+    </button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+var STARTED_AT = {{ started_ts }};
+var TOTAL_PHOTOS = {{ photo_players | length }};
+var alreadyGuessed = {{ 'true' if already_guessed else 'false' }};
+
+// ── Timer ────────────────────────────────────────────────────────────────────
+(function () {
+  var timerEl = document.getElementById('timerValue');
+  if (!timerEl || alreadyGuessed) return;
+  function tick() {
+    var elapsed = Math.floor(Date.now() / 1000 - STARTED_AT);
+    var m = Math.floor(elapsed / 60);
+    var s = elapsed % 60;
+    timerEl.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    if (elapsed > 60) timerEl.style.color = 'var(--warning)';
+    if (elapsed > 120) timerEl.style.color = 'var(--danger)';
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+
+// ── Guess counter / submit gating ────────────────────────────────────────────
+var selected = {};
+function markSelected(selectEl, photoId) {
+  selected[photoId] = selectEl.value;
+  var count = Object.keys(selected).length;
+  var countEl = document.getElementById('guessCount');
+  var submitBtn = document.getElementById('submitBtn');
+  if (countEl) countEl.textContent = count + ' / ' + TOTAL_PHOTOS + ' guessed';
+  if (submitBtn) submitBtn.disabled = count < TOTAL_PHOTOS;
+
+  // Highlight the card as answered
+  var card = document.getElementById('eyeCard' + photoId);
+  if (card) card.classList.add('answered');
+}
+
+// ── Poll for game completion when already guessed ─────────────────────────────
+if (alreadyGuessed) {
+  setInterval(function () {
+    fetch('/api/room/{{ room.code }}/status')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.status === 'finished') window.location.href = '{{ url_for("results", code=room.code) }}';
+      });
+  }, 3000);
+}
+</script>
+{% endblock %}

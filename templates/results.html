@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Results — Room {{ room.code }}{% endblock %}
+
+{% block head %}
+{% if room.status != 'finished' %}
+<meta http-equiv="refresh" content="5">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>
+    {% if room.status == 'finished' %}
+      Final Results
+    {% else %}
+      Results So Far &nbsp;<span class="muted" style="font-size:1rem;">(updating&hellip;)</span>
+    {% endif %}
+  </h1>
+  <span class="code-badge">{{ room.code }}</span>
+</div>
+
+<!-- Leaderboard -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <h2>Leaderboard</h2>
+  <ol class="leaderboard">
+    {% for p in leaderboard %}
+    <li class="lb-row {% if player and p.id == player.id %}is-you{% endif %}">
+      <span class="lb-rank">
+        {% if loop.index == 1 %}&#127941;
+        {% elif loop.index == 2 %}&#129352;
+        {% elif loop.index == 3 %}&#129353;
+        {% else %}{{ loop.index }}
+        {% endif %}
+      </span>
+      <span class="lb-name">
+        {{ p.name }}{% if player and p.id == player.id %} <em>(you)</em>{% endif %}
+        {% if not p.has_guessed and room.status != 'finished' %}
+          <span class="tag">guessing&hellip;</span>
+        {% endif %}
+      </span>
+      <span class="lb-score">{{ p.score }} pts</span>
+    </li>
+    {% endfor %}
+  </ol>
+</div>
+
+<!-- Personal breakdown -->
+{% if my_guesses %}
+<div class="card" style="margin-bottom:1.5rem;">
+  <h2>Your Guesses</h2>
+  <ul class="guess-breakdown">
+    {% for g in my_guesses %}
+    <li class="guess-row {% if g.correct %}correct{% else %}wrong{% endif %}">
+      <div class="guess-photo">
+        <img src="{{ url_for('player_image', player_id=g.photo_player_id) }}" alt="Eyes">
+      </div>
+      <div class="guess-detail">
+        <p>
+          You guessed <strong>{{ g.guessed_player.name }}</strong>
+          {% if g.correct %}
+            — <span class="correct-text">Correct!</span> +{{ g.points }} pts
+          {% else %}
+            — <span class="wrong-text">Wrong.</span>
+            The answer was <strong>{{ g.photo_player.name }}</strong>.
+          {% endif %}
+        </p>
+        <p class="muted">Submitted in {{ "%.1f"|format(g.time_taken) }}s</p>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<!-- Reveal: show all photos with owner names -->
+{% if room.status == 'finished' %}
+<div class="card" style="margin-bottom:1.5rem;">
+  <h2>The Big Reveal</h2>
+  <div class="reveal-grid">
+    {% for p in leaderboard if p.has_uploaded %}
+    <div class="reveal-card">
+      <img src="{{ url_for('player_image', player_id=p.id) }}" alt="{{ p.name }}'s eyes" class="eye-photo">
+      <div class="reveal-name">{{ p.name }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card" style="text-align:center;">
+  <p>Game over! Want to play again?</p>
+  <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top:1rem;">Back to Home</a>
+</div>
+{% else %}
+<div class="waiting-card card">
+  <div class="pulse-dot"></div>
+  <p>Waiting for all players to submit their guesses&hellip; Page refreshes every 5 s.</p>
+</div>
+{% endif %}
+{% endblock %}

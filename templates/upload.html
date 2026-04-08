@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Upload Your Eyes — Room {{ room.code }}{% endblock %}
+
+{% block content %}
+<div class="card upload-card">
+  <h1>Upload Your Eyes</h1>
+  <p class="muted">
+    Take or choose a photo that shows <strong>only your eyes</strong>.
+    The image will be automatically cropped to a 2:1 wide strip —
+    so a close-up works best. No other features should be visible if you want to be tricky!
+  </p>
+
+  <div class="upload-tips">
+    <span>&#128161; Tips:</span>
+    <ul>
+      <li>Good lighting helps a lot</li>
+      <li>Level, forward-facing crop</li>
+      <li>JPG or PNG, up to 16 MB</li>
+    </ul>
+  </div>
+
+  <form action="{{ url_for('upload', code=room.code) }}" method="post" enctype="multipart/form-data">
+    <div class="file-drop" id="fileDrop">
+      <input type="file" name="photo" id="photoInput" accept="image/jpeg,image/png,image/webp" required>
+      <label for="photoInput" class="file-label">
+        <span id="fileLabel">Click to choose a photo or drag &amp; drop</span>
+      </label>
+      <div id="previewWrap" class="preview-wrap hidden">
+        <img id="preview" src="" alt="Preview">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <a href="{{ url_for('room_lobby', code=room.code) }}" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-primary">Upload Photo</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const input = document.getElementById('photoInput');
+  const label = document.getElementById('fileLabel');
+  const preview = document.getElementById('preview');
+  const previewWrap = document.getElementById('previewWrap');
+
+  input.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    label.textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.src = e.target.result;
+      previewWrap.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Drag-and-drop visual feedback
+  const drop = document.getElementById('fileDrop');
+  ['dragenter', 'dragover'].forEach(ev =>
+    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag-over'); })
+  );
+  ['dragleave', 'drop'].forEach(ev =>
+    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag-over'); })
+  );
+  drop.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    input.files = e.dataTransfer.files;
+    input.dispatchEvent(new Event('change'));
+  });
+})();
+</script>
+{% endblock %}

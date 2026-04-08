@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Room {{ room.code }} — Lobby{% endblock %}
+
+{% block head %}
+<meta http-equiv="refresh" content="4">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Room <span class="code-badge">{{ room.code }}</span></h1>
+    <p class="muted">Share this code with your friends so they can join.</p>
+  </div>
+  {% if player.is_host %}
+  <div class="host-badge">HOST</div>
+  {% endif %}
+</div>
+
+<!-- Player list -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <h2>Players ({{ players | length }})</h2>
+  <ul class="player-list">
+    {% for p in players %}
+    <li class="player-row {% if p.id == player.id %}is-you{% endif %}">
+      <span class="player-name">{{ p.name }}{% if p.id == player.id %} <em>(you)</em>{% endif %}{% if p.is_host %} <span class="tag">host</span>{% endif %}</span>
+      <span class="upload-status {% if p.has_uploaded %}uploaded{% else %}pending{% endif %}">
+        {% if p.has_uploaded %}Photo ready &#10003;{% else %}Waiting for photo&hellip;{% endif %}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<!-- Upload / re-upload -->
+<div class="card" style="margin-bottom:1.5rem;">
+  {% if player.has_uploaded %}
+  <div class="uploaded-preview">
+    <img src="{{ url_for('player_image', player_id=player.id) }}" alt="Your eyes" class="eye-preview">
+    <p class="muted" style="margin-top:.5rem;">Your photo is ready. You can replace it below if needed.</p>
+  </div>
+  {% else %}
+  <p>You haven't uploaded your photo yet.</p>
+  {% endif %}
+  <a href="{{ url_for('upload', code=room.code) }}" class="btn {% if player.has_uploaded %}btn-ghost{% else %}btn-primary{% endif %}" style="margin-top:1rem;">
+    {% if player.has_uploaded %}Replace photo{% else %}Upload your eyes{% endif %}
+  </a>
+</div>
+
+<!-- Host controls -->
+{% if player.is_host %}
+<div class="card">
+  {% set uploaded_count = players | selectattr('has_uploaded') | list | length %}
+  {% if uploaded_count >= 2 %}
+  <p>{{ uploaded_count }} / {{ players | length }} players have uploaded. Ready to start!</p>
+  <form action="{{ url_for('start_game', code=room.code) }}" method="post" style="margin-top:1rem;">
+    <button type="submit" class="btn btn-primary">Start Game</button>
+  </form>
+  {% else %}
+  <p class="muted">Waiting for at least 2 players to upload photos before you can start&hellip;</p>
+  {% endif %}
+</div>
+{% else %}
+<div class="card waiting-card">
+  <div class="pulse-dot"></div>
+  <p>Waiting for the host to start the game&hellip; (page auto-refreshes)</p>
+</div>
+{% endif %}
+{% endblock %}
